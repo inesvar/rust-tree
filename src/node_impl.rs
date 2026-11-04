@@ -18,9 +18,34 @@ impl<T> Nodable for Node<T> {
         Self(Rc::new(RefCell::new(NodeData::new(value))))
     }
 
-    fn add_child(&self, other: Node<T>) -> Result<(), NodeError> {
+    fn is_same_as(&self, other: &Self) -> bool {
+        Rc::ptr_eq(&self.0, &other.0)
+    }
+
+    fn is_ancestor_of(&self, other: &Self) -> Result<bool, BorrowError> {
+        if self.is_same_as(other) {
+            return Ok(true);
+        }
+
+        match other.get_parent()? {
+            None => Ok(false),
+            Some(parent) => self.is_ancestor_of(&parent),
+        }
+    }
+
+    fn add_child(&self, other: Self) -> Result<(), NodeError> {
+        if other.is_ancestor_of(self)? {
+            return Err(NodeError::CycleError);
+        }
+
+        if let Some(previous_child) = self.get_child()? {
+            previous_child.0.borrow_mut().parent = None;
+        }
+        self.0.try_borrow_mut()?.child = Some(other.0.clone());
+        if let Some(previous_parent) = other.get_parent()? {
+            previous_parent.0.borrow_mut().child = None;
+        }
         other.0.try_borrow_mut()?.parent = Some(Rc::downgrade(&self.0));
-        self.0.try_borrow_mut()?.child = Some(other.0);
         Ok(())
     }
 
@@ -114,5 +139,144 @@ impl<T> Nodable for Node<T> {
         } else {
             Ok(accumulator)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::assert_matches;
+
+    fn node() -> Node<i32> {
+        Node::new(Rc::new(RefCell::new(0)))
+    }
+
+    #[test]
+    fn free_node_has_no_parent_and_no_child() -> Result<(), NodeError> {
+        let node = node();
+
+        assert!(node.get_parent()?.is_none());
+        assert!(node.get_child()?.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn add_child_links_two_free_nodes() -> Result<(), NodeError> {
+        let parent = node();
+        let child = node();
+
+        parent.add_child(child.clone())?;
+
+        assert!(parent.get_child()?.is_some_and(|c| c.is_same_as(&child)));
+        assert!(child.get_parent()?.is_some_and(|p| p.is_same_as(&parent)));
+
+        assert!(parent.get_parent()?.is_none());
+        assert!(child.get_child()?.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn add_child_reparents_and_clears_stale_links() -> Result<(), NodeError> {
+        let parent = node();
+        let old_child = node();
+        parent.add_child(old_child.clone())?;
+
+        let old_parent = node();
+        let child = node();
+        old_parent.add_child(child.clone())?;
+
+        parent.add_child(child.clone())?;
+
+        assert!(parent.get_child()?.is_some_and(|c| c.is_same_as(&child)));
+        assert!(child.get_parent()?.is_some_and(|p| p.is_same_as(&parent)));
+
+        assert!(old_child.get_parent()?.is_none());
+        assert!(old_parent.get_child()?.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn add_child_is_idempotent_when_readding_existing_child() -> Result<(), NodeError> {
+        let parent = node();
+        let child = node();
+        parent.add_child(child.clone())?;
+
+        parent.add_child(child.clone())?;
+
+        assert!(parent.get_child()?.is_some_and(|c| c.is_same_as(&child)));
+        assert!(child.get_parent()?.is_some_and(|p| p.is_same_as(&parent)));
+
+        assert!(parent.get_parent()?.is_none());
+        assert!(child.get_child()?.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn add_child_rejects_self_cycle() -> Result<(), NodeError> {
+        let node = node();
+
+        assert_matches!(node.add_child(node.clone()), Err(NodeError::CycleError));
+
+        assert!(node.get_child()?.is_none());
+        assert!(node.get_parent()?.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn add_child_rejects_cycle_when_child_is_ancestor() -> Result<(), NodeError> {
+        let parent = node();
+        let child = node();
+        parent.add_child(child.clone())?;
+
+        assert_matches!(child.add_child(parent.clone()), Err(NodeError::CycleError));
+
+        assert!(parent.get_child()?.is_some_and(|c| c.is_same_as(&child)));
+        assert!(child.get_parent()?.is_some_and(|p| p.is_same_as(&parent)));
+
+        assert!(parent.get_parent()?.is_none());
+        assert!(child.get_child()?.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn add_child_can_move_a_descendant_up_without_cycle() -> Result<(), NodeError> {
+        let grand_parent = node();
+        let parent = node();
+        let child = node();
+        parent.add_child(child.clone())?;
+        grand_parent.add_child(parent.clone())?;
+
+        grand_parent.add_child(child.clone())?;
+
+        assert!(
+            grand_parent
+                .get_child()?
+                .is_some_and(|c| c.is_same_as(&child))
+        );
+        assert!(
+            child
+                .get_parent()?
+                .is_some_and(|p| p.is_same_as(&grand_parent))
+        );
+
+        assert!(parent.get_parent()?.is_none());
+        assert!(parent.get_child()?.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn add_child_propagates_borrow_errors_without_side_effects() -> Result<(), NodeError> {
+        let parent = node();
+        let child = node();
+
+        let result = {
+            let _guard = parent.0.borrow_mut();
+            parent.add_child(child.clone())
+        };
+
+        assert_matches!(result, Err(NodeError::BorrowError(_)));
+        assert!(parent.get_child()?.is_none());
+        assert!(child.get_parent()?.is_none());
+        Ok(())
     }
 }

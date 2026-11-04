@@ -6,6 +6,8 @@ pub trait Nodable: Sized {
     type T;
 
     fn new(value: Rc<RefCell<Self::T>>) -> Self;
+    fn is_same_as(&self, other: &Self) -> bool;
+    fn is_ancestor_of(&self, other: &Self) -> Result<bool, BorrowError>;
     fn add_child(&self, other: Self) -> Result<(), NodeError>;
     fn get_parent(&self) -> Result<Option<Self>, BorrowError>;
     fn get_child(&self) -> Result<Option<Self>, BorrowError>;

@@ -4,6 +4,7 @@ use std::cell::{BorrowError, BorrowMutError};
 pub enum NodeError {
     BorrowError(BorrowError),
     BorrowMutError(BorrowMutError),
+    CycleError,
 }
 
 impl From<BorrowError> for NodeError {
