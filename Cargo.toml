@@ -3,4 +3,12 @@ name = "rust-tree"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "rust_tree"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rust-tree"
+path = "src/main.rs"
+
 [dependencies]
