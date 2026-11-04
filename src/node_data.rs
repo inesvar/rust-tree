@@ -1,10 +1,18 @@
-use std::{
-    cell::RefCell,
-    rc::{Rc, Weak},
-};
+use std::cell::RefCell;
+use std::rc::{Rc, Weak};
 
-#[derive(Default)]
-pub(super) struct NodeData {
-    pub(super) parent: Option<Weak<RefCell<NodeData>>>,
-    pub(super) child: Option<Rc<RefCell<NodeData>>>,
+pub(super) struct NodeData<T> {
+    pub(super) parent: Option<Weak<RefCell<NodeData<T>>>>,
+    pub(super) child: Option<Rc<RefCell<NodeData<T>>>>,
+    pub(super) value: Rc<RefCell<T>>,
+}
+
+impl<T> NodeData<T> {
+    pub(super) fn new(value: Rc<RefCell<T>>) -> Self {
+        Self {
+            parent: None,
+            child: None,
+            value,
+        }
+    }
 }
