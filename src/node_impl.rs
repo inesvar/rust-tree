@@ -1,5 +1,5 @@
-use super::nodable::Nodable;
 use super::node_data::NodeData;
+use super::{Nodable, NodeError};
 use std::cell::{BorrowError, RefCell};
 use std::rc::Rc;
 
@@ -68,6 +68,38 @@ impl<T> Nodable for Node<T> {
 
         if let Some(child) = self.get_child()? {
             child.accumulate_for_all_children(accumulator, f)
+        } else {
+            Ok(accumulator)
+        }
+    }
+
+    fn accumulate_mut_for_all_ancesters<F, U>(&self, init: U, f: F) -> Result<U, NodeError>
+    where
+        F: Fn(&mut Self::T, U) -> U,
+    {
+        let mut accumulator = init;
+        let data = self.get_data()?;
+        let mut value = data.try_borrow_mut()?;
+        accumulator = f(&mut value, accumulator);
+
+        if let Some(parent) = self.get_parent()? {
+            parent.accumulate_mut_for_all_ancesters(accumulator, f)
+        } else {
+            Ok(accumulator)
+        }
+    }
+
+    fn accumulate_mut_for_all_children<F, U>(&self, init: U, f: F) -> Result<U, NodeError>
+    where
+        F: Fn(&mut Self::T, U) -> U,
+    {
+        let mut accumulator = init;
+        let data = self.get_data()?;
+        let mut value = data.try_borrow_mut()?;
+        accumulator = f(&mut value, accumulator);
+
+        if let Some(child) = self.get_child()? {
+            child.accumulate_mut_for_all_children(accumulator, f)
         } else {
             Ok(accumulator)
         }

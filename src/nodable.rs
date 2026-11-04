@@ -1,7 +1,6 @@
-use std::{
-    cell::{BorrowError, RefCell},
-    rc::Rc,
-};
+use super::NodeError;
+use std::cell::{BorrowError, RefCell};
+use std::rc::Rc;
 
 pub trait Nodable: Sized {
     type T;
@@ -18,4 +17,11 @@ pub trait Nodable: Sized {
     fn accumulate_for_all_children<F, U>(&self, init: U, f: F) -> Result<U, BorrowError>
     where
         F: Fn(&Self::T, U) -> U;
+
+    fn accumulate_mut_for_all_ancesters<F, U>(&self, init: U, f: F) -> Result<U, NodeError>
+    where
+        F: Fn(&mut Self::T, U) -> U;
+    fn accumulate_mut_for_all_children<F, U>(&self, init: U, f: F) -> Result<U, NodeError>
+    where
+        F: Fn(&mut Self::T, U) -> U;
 }
