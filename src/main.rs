@@ -1,7 +1,7 @@
-use rust_tree::{Nodable, Node};
+use rust_tree::{Nodable, Node, NodeError};
 use std::{cell::RefCell, rc::Rc};
 
-fn main() {
+fn main() -> Result<(), NodeError> {
     let world_transform = Rc::new(RefCell::new(1));
     let planet_transform = Rc::new(RefCell::new(1));
     let player_transform = Rc::new(RefCell::new(1));
@@ -10,8 +10,8 @@ fn main() {
     let planet_node = Node::<i32>::new(planet_transform.clone());
     let player_node = Node::<i32>::new(player_transform.clone());
 
-    planet_node.add_child(player_node.clone());
-    world_node.add_child(planet_node.clone());
+    planet_node.add_child(player_node.clone())?;
+    world_node.add_child(planet_node.clone())?;
 
     let result = player_node.accumulate_for_all_ancestors(1, |init, acc| init * acc);
     println!("{:?}", result);
@@ -35,4 +35,6 @@ fn main() {
     let result = player_node.accumulate_for_all_ancestors(1, |init, acc| init * acc);
     println!("{:?}", result);
     *truc = 1;
+
+    Ok(())
 }

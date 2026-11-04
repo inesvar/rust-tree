@@ -18,9 +18,10 @@ impl<T> Nodable for Node<T> {
         Self(Rc::new(RefCell::new(NodeData::new(value))))
     }
 
-    fn add_child(&self, other: Node<T>) {
-        other.0.borrow_mut().parent = Some(Rc::downgrade(&self.0));
-        self.0.borrow_mut().child = Some(other.0);
+    fn add_child(&self, other: Node<T>) -> Result<(), NodeError> {
+        other.0.try_borrow_mut()?.parent = Some(Rc::downgrade(&self.0));
+        self.0.try_borrow_mut()?.child = Some(other.0);
+        Ok(())
     }
 
     fn get_parent(&self) -> Result<Option<Self>, BorrowError> {
