@@ -13,13 +13,13 @@ fn main() {
     planet_node.add_child(player_node.clone());
     world_node.add_child(planet_node.clone());
 
-    let result = player_node.accumulate_for_all_ancesters(1, |init, acc| init * acc);
+    let result = player_node.accumulate_for_all_ancestors(1, |init, acc| init * acc);
     println!("{:?}", result);
 
     *world_transform.borrow_mut() = 2;
     *player_transform.borrow_mut() = 4;
 
-    let result = player_node.accumulate_for_all_ancesters(1, |init, acc| init * acc);
+    let result = player_node.accumulate_for_all_ancestors(1, |init, acc| init * acc);
     println!("{:?}", result);
 
     let result = world_node.accumulate_for_all_children(1, |init, acc| init * acc);
@@ -32,7 +32,7 @@ fn main() {
     println!("{:?}", result);
 
     let mut truc = world_transform.borrow_mut();
-    let result = player_node.accumulate_for_all_ancesters(1, |init, acc| init * acc);
+    let result = player_node.accumulate_for_all_ancestors(1, |init, acc| init * acc);
     println!("{:?}", result);
     *truc = 1;
 }

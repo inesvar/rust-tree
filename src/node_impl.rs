@@ -41,7 +41,7 @@ impl<T> Nodable for Node<T> {
         Ok(self.0.try_borrow()?.value.clone())
     }
 
-    fn accumulate_for_all_ancesters<F, U>(&self, init: U, f: F) -> Result<U, BorrowError>
+    fn accumulate_for_all_ancestors<F, U>(&self, init: U, f: F) -> Result<U, BorrowError>
     where
         F: Fn(&Self::T, U) -> U,
     {
@@ -51,7 +51,7 @@ impl<T> Nodable for Node<T> {
         accumulator = f(&value, accumulator);
 
         if let Some(parent) = self.get_parent()? {
-            parent.accumulate_for_all_ancesters(accumulator, f)
+            parent.accumulate_for_all_ancestors(accumulator, f)
         } else {
             Ok(accumulator)
         }
@@ -73,7 +73,7 @@ impl<T> Nodable for Node<T> {
         }
     }
 
-    fn accumulate_mut_for_all_ancesters<F, U>(&self, init: U, f: F) -> Result<U, NodeError>
+    fn accumulate_mut_for_all_ancestors<F, U>(&self, init: U, f: F) -> Result<U, NodeError>
     where
         F: Fn(&mut Self::T, U) -> U,
     {
@@ -83,7 +83,7 @@ impl<T> Nodable for Node<T> {
         accumulator = f(&mut value, accumulator);
 
         if let Some(parent) = self.get_parent()? {
-            parent.accumulate_mut_for_all_ancesters(accumulator, f)
+            parent.accumulate_mut_for_all_ancestors(accumulator, f)
         } else {
             Ok(accumulator)
         }

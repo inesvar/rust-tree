@@ -11,14 +11,14 @@ pub trait Nodable: Sized {
     fn get_child(&self) -> Result<Option<Self>, BorrowError>;
     fn get_data(&self) -> Result<Rc<RefCell<Self::T>>, BorrowError>;
 
-    fn accumulate_for_all_ancesters<F, U>(&self, init: U, f: F) -> Result<U, BorrowError>
+    fn accumulate_for_all_ancestors<F, U>(&self, init: U, f: F) -> Result<U, BorrowError>
     where
         F: Fn(&Self::T, U) -> U;
     fn accumulate_for_all_children<F, U>(&self, init: U, f: F) -> Result<U, BorrowError>
     where
         F: Fn(&Self::T, U) -> U;
 
-    fn accumulate_mut_for_all_ancesters<F, U>(&self, init: U, f: F) -> Result<U, NodeError>
+    fn accumulate_mut_for_all_ancestors<F, U>(&self, init: U, f: F) -> Result<U, NodeError>
     where
         F: Fn(&mut Self::T, U) -> U;
     fn accumulate_mut_for_all_children<F, U>(&self, init: U, f: F) -> Result<U, NodeError>
