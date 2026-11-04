@@ -46,10 +46,11 @@ impl<T> Nodable for Node<T> {
         F: Fn(&Self::T, U) -> U,
     {
         let mut accumulator = init;
-        let data = self.get_data()?;
-        let value = data.try_borrow()?;
-        accumulator = f(&value, accumulator);
-
+        {
+            let data = self.get_data()?;
+            let value = data.try_borrow()?;
+            accumulator = f(&value, accumulator);
+        }
         if let Some(parent) = self.get_parent()? {
             parent.accumulate_for_all_ancestors(accumulator, f)
         } else {
@@ -62,10 +63,11 @@ impl<T> Nodable for Node<T> {
         F: Fn(&Self::T, U) -> U,
     {
         let mut accumulator = init;
-        let data = self.get_data()?;
-        let value = data.try_borrow()?;
-        accumulator = f(&value, accumulator);
-
+        {
+            let data = self.get_data()?;
+            let value = data.try_borrow()?;
+            accumulator = f(&value, accumulator);
+        }
         if let Some(child) = self.get_child()? {
             child.accumulate_for_all_children(accumulator, f)
         } else {
@@ -78,10 +80,11 @@ impl<T> Nodable for Node<T> {
         F: Fn(&mut Self::T, U) -> U,
     {
         let mut accumulator = init;
-        let data = self.get_data()?;
-        let mut value = data.try_borrow_mut()?;
-        accumulator = f(&mut value, accumulator);
-
+        {
+            let data = self.get_data()?;
+            let mut value = data.try_borrow_mut()?;
+            accumulator = f(&mut value, accumulator);
+        }
         if let Some(parent) = self.get_parent()? {
             parent.accumulate_mut_for_all_ancestors(accumulator, f)
         } else {
@@ -94,9 +97,11 @@ impl<T> Nodable for Node<T> {
         F: Fn(&mut Self::T, U) -> U,
     {
         let mut accumulator = init;
-        let data = self.get_data()?;
-        let mut value = data.try_borrow_mut()?;
-        accumulator = f(&mut value, accumulator);
+        {
+            let data = self.get_data()?;
+            let mut value = data.try_borrow_mut()?;
+            accumulator = f(&mut value, accumulator);
+        }
 
         if let Some(child) = self.get_child()? {
             child.accumulate_mut_for_all_children(accumulator, f)

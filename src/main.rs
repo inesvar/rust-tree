@@ -27,8 +27,8 @@ fn main() {
 
     let result = world_node.accumulate_mut_for_all_children(1, |init, acc| {
         *init *= 2;
-        *init * acc}
-    );
+        *init * acc
+    });
     println!("{:?}", result);
 
     let mut truc = world_transform.borrow_mut();
