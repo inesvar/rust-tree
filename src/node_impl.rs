@@ -3,8 +3,13 @@ use super::{Nodable, NodeError};
 use std::cell::{BorrowError, RefCell};
 use std::rc::Rc;
 
-#[derive(Clone)]
 pub struct Node<T>(Rc<RefCell<NodeData<T>>>);
+
+impl<T> Clone for Node<T> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
 
 impl<T> Nodable for Node<T> {
     type T = T;
